@@ -7,6 +7,8 @@ Created on Jan 3, 2017
 from kafka import TopicPartition
 from egecan.parser.Utf8Parser import Utf8Parser
 from egecan.kafka.BaseConsumer import BaseConsumer
+import logging
+
 
 class SinglePartitionConsumer(BaseConsumer):
     _parser=None
