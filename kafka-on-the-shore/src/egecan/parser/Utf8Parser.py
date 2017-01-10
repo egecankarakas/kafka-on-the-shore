@@ -49,7 +49,7 @@ class Utf8Parser(BaseParser):
         elif self._type.__name__=='csv':
             self.data = data.decode('utf-8').split(self._delimeter)
         elif self._type.__name__ == 'object':
-            self.data = data.encode('utf-8').decode('utf-8')
+            self.data = data.decode('utf-8')
         else:
             raise UnsuppportedTypeError("\nThe given type: "+str(self._type.__name__)+" is not supported by Utf8Parser."+
                                         "\n Please consider using one of the following types: json, xml, csv")

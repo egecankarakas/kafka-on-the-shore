@@ -6,8 +6,8 @@ Created on Jan 6, 2017
 
 import logging
 import logging.config
+import inspect
 from kafkaLogger import KafkaLogging
-
 
 if __name__ == '__main__':
 
@@ -23,21 +23,14 @@ if __name__ == '__main__':
             },
         }
     }
-    dictConf=KafkaLogging(clientId='myClient',topic='test',partition=0,when='D',interval=1).DEFAULT_LOGGING
-    print dictConf
-#===============================================================================
-#     
-# 
-#     kafkaHandlerFilename='logs/kafka-ClientId-Topic-Partition.log'
-#     kafkaOffsetHandlerFilename='logs/offset-ClientId-Topic-Partition.log'
-#     
-#     DEFAULT_LOGGING['handlers']['kafkaHandler']['filename']='newTopic bla bla'
-#     
-#     DEFAULT_LOGGING['handlers']['kafkaHandler']['filename']='newTopic bla bla'
-#     DEFAULT_LOGGING['handlers']['kafkaOffsetHandler']['filename']='newTopic bla bla'
-#     
-#     
-#     logging.config.dictConfig(DEFAULT_LOGGING)
-#===============================================================================
     
-    #logging.info('Hello, log')
+    kafkaLogging=KafkaLogging(clientId='myClient',topic='test',partition=0,when='D',interval=1,backupCount=7)
+    dictConf=kafkaLogging.DEFAULT_LOGGING
+    logger=kafkaLogging.logger
+    
+    for i in range(1):
+        logger.info('Merhaba '+str(i))
+        
+    print dictConf
+    
+    print inspect.getfile(kafkaLogging.__class__)

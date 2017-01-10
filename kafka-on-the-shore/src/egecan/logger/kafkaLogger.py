@@ -4,6 +4,8 @@ Created on Jan 6, 2017
 @author: egecan
 '''
 import logging
+import logging.config
+import inspect
 
 class KafkaLogging(object):
     '''
@@ -26,18 +28,20 @@ class KafkaLogging(object):
                 'class':'logging.handlers.TimedRotatingFileHandler',
                 'level':'INFO',
                 'formatter':'simpleFormatter',
-                'filename':'logs/kafka-clientId-topic-partition.log',
+                'filename':'logs/kafka-client_id-topic-partition.log',
                 'when':'D',
                 'interval':1,
                 'backupCount':7,
                 'encoding':'utf-8',
             },
             'kafkaOffsetHandler': {
-                'class':'logging.FileHandler',
+                'class':'logging.handlers.RotatingFileHandler',
                 'level':'INFO',
                 'formatter':'kafkaOffsetFormatter',
-                'filename':'logs/offset-clientId-topic-partition.log',
-                'mode':'w',
+                'filename':'logs/offset-client_id-topic-partition.log',
+                'mode':'r+',
+                'maxBytes':1,
+                'backupCount':1,
                 'encoding':'utf-8',
             }
             
@@ -48,21 +52,27 @@ class KafkaLogging(object):
                 'handlers':['kafkaHandler'],
                 'propogate':False,
             },
-            'kafkaOffsetLogger': {
+            'offsetLogger': {
                 'level': 'INFO',
-                'handlers':['kafkaOffsetHandler']
-            },
+                'handlers':['kafkaOffsetHandler'],
+                'propogate':False,
+            }
         }
     }
     
-    editables=['when','clientId','topic','partition','interval','backupCount']
+    editables=['when','client_id','topic','partition','interval','backupCount']
 
     def __init__(self, **configs):
         self._configureLogging(**configs)
+        logging.config.dictConfig(self.DEFAULT_LOGGING)
+        self.logger=logging.getLogger('kafkaLogger')
+        self.offsetLogger=logging.getLogger('offsetLogger')
+        #return self.logger
         #print self.DEFAULT_LOGGING
         
     def _configureLogging(self,**configs):
         dictConf=self.DEFAULT_LOGGING
+        absoluteBasePath="/".join(inspect.getfile(self.__class__).split('/')[:-1])
         for key in configs:
             if key in self.editables:
                 if key=='when' or key=='interval' or key=='backupCount':
@@ -70,4 +80,9 @@ class KafkaLogging(object):
                 else:
                     dictConf['handlers']['kafkaOffsetHandler']['filename']=str(configs[key]).join(dictConf['handlers']['kafkaOffsetHandler']['filename'].rsplit(key, 1))
                     dictConf['handlers']['kafkaHandler']['filename']=str(configs[key]).join(dictConf['handlers']['kafkaHandler']['filename'].rsplit(key, 1))
-
+        
+        dictConf['handlers']['kafkaOffsetHandler']['filename']=absoluteBasePath+'/'+dictConf['handlers']['kafkaOffsetHandler']['filename']
+        print dictConf['handlers']['kafkaOffsetHandler']['filename']
+        dictConf['handlers']['kafkaHandler']['filename']=absoluteBasePath+'/'+dictConf['handlers']['kafkaHandler']['filename']
+        print dictConf['handlers']['kafkaHandler']['filename']
+    
