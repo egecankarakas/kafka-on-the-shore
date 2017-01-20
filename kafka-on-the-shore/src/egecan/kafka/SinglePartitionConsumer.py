@@ -8,7 +8,6 @@ from kafka import TopicPartition
 from egecan.parser.Utf8Parser import Utf8Parser
 from egecan.kafka.BaseConsumer import BaseConsumer
 from egecan.logger.kafkaLogger import KafkaLogging
-import inspect
 
 class SinglePartitionConsumer(BaseConsumer):
     _parser=None
@@ -17,21 +16,19 @@ class SinglePartitionConsumer(BaseConsumer):
     logConfig=None
     topicP=None
     
-    def __init__(self,topic='test',dataFormat='',partition=0,**configs):
+    def __init__(self,topic='test',dataFormat='',when='M',interval=1,backupCount=3,partition=0,literalType='xml',**configs):
         if dataFormat!=None:
-            self._parser=Utf8Parser(dataFormat=dataFormat)
-
+            self._parser=Utf8Parser(dataFormat=dataFormat,literalType=literalType)
         BaseConsumer.__init__(self,value_deserializer=self._parser.getParserFunction(),**configs)
 
-        configs.update({'topic':topic,'partition':partition})
+        configs.update({'topic':topic,'partition':partition,
+                             'when':when,'interval':interval,'backupCount':backupCount})
         self._configureLogger(**configs)
         
-
         self.topicP=TopicPartition(topic,partition)
         self.assign([self.topicP])
         self.seek(self.topicP,self._followOffset())
-        
-        
+    
     def _followOffset(self,**configs):
         self.offset=0
         try:
@@ -45,19 +42,24 @@ class SinglePartitionConsumer(BaseConsumer):
     
     def __next__(self):
         msgs=BaseConsumer.__next__(self)
+        parsedMsgs=[]
         if self.topicP in msgs:
             for msg in msgs[self.topicP]:
-                self.logger.info(msg=msg)
+                parsedMessage="Consumer Record("
+                for i in range(len(msg)):
+                    self._parser.parseRecord(msg._fields[i])+'='+self._parser.parseRecord(msg.__getnewargs__()[i])+','
+                parsedMessage=parsedMessage[:-1]+')'
+                parsedMsgs.append(parsedMessage)
+                self.logger.info(parsedMessage)
                 self.offsetLogger.info(msg=msg.offset)
-        return msgs
+        return parsedMsgs
     
     def getMessages(self, timeout_ms=0, max_records=None):
         msgs=BaseConsumer.getMessages(self, timeout_ms=timeout_ms, max_records=max_records)
         if self.topicP in msgs:
             for msg in msgs[self.topicP]:
-                self.logger.info(msg=msg)
-                self.offsetLogger.info(msg=str(msg.offset))
-                
+                self.logger.info(self._parser.parseRecord(msg.value))
+                self.offsetLogger.info(msg=msg.offset)
         return msgs
     
     def _configureLogger(self,**configs):
@@ -71,6 +73,7 @@ class SinglePartitionConsumer(BaseConsumer):
         self.logConfig=kafkaLogging.DEFAULT_LOGGING
         self.logger=kafkaLogging.logger
         self.offsetLogger=kafkaLogging.offsetLogger
-        
+    
     def _initialize(self):
         raise NotImplementedError
+    

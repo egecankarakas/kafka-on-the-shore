@@ -64,6 +64,7 @@ class KafkaLogging(object):
 
     def __init__(self, **configs):
         self._configureLogging(**configs)
+        print self.DEFAULT_LOGGING
         logging.config.dictConfig(self.DEFAULT_LOGGING)
         self.logger=logging.getLogger('kafkaLogger')
         self.offsetLogger=logging.getLogger('offsetLogger')
