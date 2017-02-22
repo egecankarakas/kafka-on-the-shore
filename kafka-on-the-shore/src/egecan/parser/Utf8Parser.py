@@ -13,10 +13,10 @@ from io import BytesIO
 
 class Utf8Parser(BaseParser):
     """This class parses a string for the given format"""
-    def __init__(self,dataFormat=None,delimeter=',',literalType='HTML',**configs):
+    def __init__(self,dataFormat=None,delimeter=',',literalType='HTML',schemaFile='',**configs):
         if dataFormat!=None:
             dataFormat=dataFormat.lower()
-        self._type = dataFormat # JSON XML CSV 
+        self._type = dataFormat # JSON XML CSV AVRO
         if dataFormat=='json':
             import json
             self._type=json
@@ -34,7 +34,7 @@ class Utf8Parser(BaseParser):
         elif dataFormat=='avro':
             import avro
             self._type=avro
-            self._schema=avro.schema.parse(open('/opt/Striim-3.6.7/Samples/SwarmApp/AvroTestRaw.avsc').read())
+            self._schema=avro.schema.parse(open(schemaFile).read())
             self._reader=avro.io.DatumReader(self._schema)
         else:
             raise UnsuppportedTypeError("\nThe given dataFormat: "
@@ -80,11 +80,13 @@ class Utf8Parser(BaseParser):
             self.data = self._type.etree.ElementTree.fromstring(data.decode('utf-8'))
         elif self._type.__name__=='csv':
             self.data = data.decode('utf-8').split(self._delimeter)
+        elif self._type.__name__=='avro':
+            self.data = self._reader.read(avro.io.BinaryDecoder(BytesIO(data)))
         elif self._type.__name__ == 'object':
             self.data = data.decode('utf-8')
         else:
             raise UnsuppportedTypeError("\nThe given type: "+str(self._type.__name__)+" is not supported by Utf8Parser."+
-                                        "\n Please consider using one of the following types: json, xml, csv")
+                                        "\n Please consider using one of the following types: json, xml, csv, avro")
         return self.data
     
     

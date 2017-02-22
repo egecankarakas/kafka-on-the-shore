@@ -16,9 +16,9 @@ class SinglePartitionConsumer(BaseConsumer):
     logConfig=None
     topicP=None
     
-    def __init__(self,topic='test',dataFormat='',when='M',interval=1,backupCount=3,partition=0,literalType='xml',**configs):
+    def __init__(self,topic='test',dataFormat='',when='M',interval=1,backupCount=3,partition=0,literalType='xml',schemaFile='',**configs):
         if dataFormat!=None:
-            self._parser=Utf8Parser(dataFormat=dataFormat,literalType=literalType)
+            self._parser=Utf8Parser(dataFormat=dataFormat,literalType=literalType,schemaFile=schemaFile)
         BaseConsumer.__init__(self,value_deserializer=self._parser.getParserFunction(),**configs)
 
         configs.update({'topic':topic,'partition':partition,
